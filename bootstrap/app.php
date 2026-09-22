@@ -23,6 +23,8 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
+// Enabled: controllers use the Hash/DB/Schema facades and all data
+// access goes through Eloquent models (User, Board, Card, ...).
 $app->withFacades();
 
 $app->withEloquent();
@@ -72,10 +74,13 @@ $app->configure('app');
 |
 */
 
+// Global: the Next.js frontend runs on a different origin (port 3000),
+// so every response needs CORS headers and OPTIONS preflights must succeed.
 $app->middleware([
     App\Http\Middleware\Cors::class,
 ]);
 
+// Route-level: "auth" protects everything except register/login.
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
 ]);
@@ -91,6 +96,7 @@ $app->routeMiddleware([
 |
 */
 
+// Registered: it wires the bearer-token guard (viaRequest) used by "auth".
 $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 
@@ -109,6 +115,7 @@ $app->router->group([
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
     require __DIR__.'/../routes/web.php';
+    // All application endpoints live under /api in their own file.
     require __DIR__.'/../routes/api.php';
 });
 

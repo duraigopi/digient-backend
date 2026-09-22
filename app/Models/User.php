@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Lumen\Auth\Authorizable;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract
@@ -15,11 +16,13 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     /**
      * The attributes that are mass assignable.
+     * "password" added so AuthController::register can User::create() in one
+     * call; it is always passed through Hash::make first.
      *
      * @var string[]
      */
     protected $fillable = [
-        'name', 'email',
+        'name', 'email', 'password',
     ];
 
     /**
@@ -30,4 +33,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $hidden = [
         'password',
     ];
+
+    // Added so a user's sessions can be listed/revoked (e.g. cascade on delete).
+    public function apiTokens(): HasMany
+    {
+        return $this->hasMany(ApiToken::class);
+    }
 }
