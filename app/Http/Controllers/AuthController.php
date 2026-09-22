@@ -59,10 +59,14 @@ class AuthController extends Controller
     // Revoke only the bearer token used for this request.
     public function logout(Request $request): JsonResponse
     {
-        $token = $request->attributes->get('api_token');
+        // Re-derive the token from the header rather than reading a request
+        // attribute set by the guard: the guard and the controller are not
+        // guaranteed to share one Request instance, and a silent miss there
+        // meant logout returned 200 while leaving the session valid.
+        $plain = $request->bearerToken();
 
-        if ($token instanceof ApiToken) {
-            $token->delete();
+        if ($plain) {
+            ApiToken::where('token_hash', ApiToken::hashToken($plain))->delete();
         }
 
         return response()->json(['message' => 'Logged out.']);

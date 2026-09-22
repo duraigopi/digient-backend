@@ -15,6 +15,13 @@ class Attachment extends Model
     // through /api/attachments/{id}, never by path.
     protected $hidden = ['stored_path'];
 
+    // See Board::$casts — the driver must not decide these PHP types.
+    protected $casts = [
+        'card_id' => 'integer',
+        'uploaded_by' => 'integer',
+        'size' => 'integer',
+    ];
+
     public function card(): BelongsTo
     {
         return $this->belongsTo(Card::class);

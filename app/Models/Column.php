@@ -10,6 +10,12 @@ class Column extends Model
 {
     protected $fillable = ['board_id', 'name', 'position'];
 
+    // See Board::$casts — the driver must not decide these PHP types.
+    protected $casts = [
+        'board_id' => 'integer',
+        'position' => 'integer',
+    ];
+
     public function board(): BelongsTo
     {
         return $this->belongsTo(Board::class);

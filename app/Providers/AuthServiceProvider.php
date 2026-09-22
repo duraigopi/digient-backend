@@ -45,10 +45,6 @@ class AuthServiceProvider extends ServiceProvider
             // Best-effort audit timestamp; not worth a failed request if it races.
             $token->forceFill(['last_used_at' => Carbon::now()])->saveQuietly();
 
-            // Remember which token authenticated this request so logout can
-            // revoke exactly that one (not every device the user is on).
-            $request->attributes->set('api_token', $token);
-
             return $token->user;
         });
     }

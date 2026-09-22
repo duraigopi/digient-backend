@@ -12,6 +12,11 @@ class Board extends Model
 {
     protected $fillable = ['owner_id', 'name'];
 
+    // Without this the driver decides the PHP type (SQLite hands back the
+    // string '1'), which broke the strict comparison in isOwnedBy() and
+    // denied the owner their own board. Casting also keeps the JSON typed.
+    protected $casts = ['owner_id' => 'integer'];
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');

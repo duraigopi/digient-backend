@@ -14,6 +14,7 @@ class ApiToken extends Model
     protected $fillable = ['user_id', 'token_hash', 'last_used_at'];
 
     protected $casts = [
+        'user_id' => 'integer',
         'last_used_at' => 'datetime',
     ];
 
