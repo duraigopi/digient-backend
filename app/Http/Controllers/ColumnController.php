@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Board;
 use App\Models\Column;
+use App\Services\AttachmentStorage;
 use App\Services\BoardAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class ColumnController extends Controller
 {
-    public function __construct(private BoardAccess $access)
+    // AttachmentStorage added in Step 5 so destroy() can remove card files.
+    public function __construct(private BoardAccess $access, private AttachmentStorage $storage)
     {
     }
 
@@ -65,6 +67,9 @@ class ColumnController extends Controller
     {
         $column = Column::findOrFail($id);
         $this->access->assertCanEdit($request->user(), $column->board);
+
+        // Step 5: unlink attachment files before the FK cascade deletes their rows.
+        $this->storage->deleteFilesForCards($column->cards()->pluck('id')->all());
 
         // Column positions may keep gaps after a delete: ordering still works
         // and there is no column-reorder feature that depends on contiguity.

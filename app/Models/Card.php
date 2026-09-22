@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Card extends Model
 {
@@ -19,5 +20,11 @@ class Card extends Model
     public function column(): BelongsTo
     {
         return $this->belongsTo(Column::class);
+    }
+
+    // Step 5: files on this card, oldest first.
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class)->orderBy('id');
     }
 }

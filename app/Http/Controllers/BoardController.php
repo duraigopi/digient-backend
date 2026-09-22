@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Board;
+use App\Services\AttachmentStorage;
 use App\Services\BoardAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BoardController extends Controller
 {
-    public function __construct(private BoardAccess $access)
+    // AttachmentStorage added in Step 5 so destroy() can remove the board's files.
+    public function __construct(private BoardAccess $access, private AttachmentStorage $storage)
     {
     }
 
@@ -48,9 +50,9 @@ class BoardController extends Controller
         $board = Board::findOrFail($id);
         $this->access->assertCanView($request->user(), $board);
 
-        // Step 4: eager-load columns -> cards. Eloquent issues one query per
-        // relation (2 extra queries total), never one per column.
-        $board->load(['columns', 'columns.cards']);
+        // Eager-load columns -> cards -> attachments. Eloquent issues one query
+        // per relation (3 extra queries total), never one per column or card.
+        $board->load(['columns', 'columns.cards', 'columns.cards.attachments']);
 
         return response()->json($this->present($board, $request));
     }
@@ -77,6 +79,10 @@ class BoardController extends Controller
         $this->access->assertOwner($request->user(), $board);
 
         $board->delete();
+
+        // Step 5: FK cascades removed the attachment rows; the files live in
+        // one per-board directory, so remove that after the rows are gone.
+        $this->storage->deleteBoardDirectory($board->id);
 
         return response()->json(['message' => 'Board deleted.']);
     }

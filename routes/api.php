@@ -42,5 +42,12 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         $router->patch('cards/{id}', 'CardController@update');
         $router->patch('cards/{id}/move', 'CardController@move');
         $router->delete('cards/{id}', 'CardController@destroy');
+
+        // Attachments: upload onto a card; download/delete by id. Download is
+        // an authenticated route (not a public storage URL) so membership is
+        // checked on every fetch.
+        $router->post('cards/{cardId}/attachments', 'AttachmentController@store');
+        $router->get('attachments/{id}', 'AttachmentController@download');
+        $router->delete('attachments/{id}', 'AttachmentController@destroy');
     });
 });

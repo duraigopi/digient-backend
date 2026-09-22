@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Card;
 use App\Models\Column;
+use App\Services\AttachmentStorage;
 use App\Services\BoardAccess;
 use App\Services\CardMover;
 use Illuminate\Http\JsonResponse;
@@ -12,8 +13,12 @@ use Illuminate\Support\Facades\DB;
 
 class CardController extends Controller
 {
-    public function __construct(private BoardAccess $access, private CardMover $mover)
-    {
+    // AttachmentStorage added in Step 5 so destroy() can remove the card's files.
+    public function __construct(
+        private BoardAccess $access,
+        private CardMover $mover,
+        private AttachmentStorage $storage,
+    ) {
     }
 
     // Append a new card to the bottom of a column.
@@ -80,6 +85,9 @@ class CardController extends Controller
     {
         $card = Card::findOrFail($id);
         $this->access->assertCanEdit($request->user(), $card->board);
+
+        // Step 5: unlink attachment files before the FK cascade deletes their rows.
+        $this->storage->deleteFilesForCards([$card->id]);
 
         DB::transaction(function () use ($card) {
             Column::whereKey($card->column_id)->lockForUpdate()->first();
