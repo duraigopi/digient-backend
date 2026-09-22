@@ -39,16 +39,46 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Render an exception into an HTTP response.
+     * Render every exception as JSON so the frontend always receives a
+     * consistent {message, errors?} body instead of Lumen's HTML pages.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Throwable  $exception
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
-     *
-     * @throws \Throwable
+     * @return \Illuminate\Http\JsonResponse
      */
     public function render($request, Throwable $exception)
     {
-        return parent::render($request, $exception);
+        if ($exception instanceof ValidationException) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $exception->errors(),
+            ], 422);
+        }
+
+        if ($exception instanceof ModelNotFoundException) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        if ($exception instanceof AuthorizationException) {
+            return response()->json(['message' => $exception->getMessage() ?: 'Forbidden.'], 403);
+        }
+
+        if ($exception instanceof HttpException) {
+            $status = $exception->getStatusCode();
+
+            return response()->json([
+                'message' => $exception->getMessage() ?: ($status === 404 ? 'Not found.' : 'HTTP error.'),
+            ], $status);
+        }
+
+        $payload = ['message' => 'Server error.'];
+
+        if (env('APP_DEBUG', false)) {
+            $payload['exception'] = get_class($exception);
+            $payload['detail'] = $exception->getMessage();
+            $payload['file'] = $exception->getFile().':'.$exception->getLine();
+        }
+
+        return response()->json($payload, 500);
     }
 }
