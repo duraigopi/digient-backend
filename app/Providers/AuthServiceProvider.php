@@ -42,7 +42,17 @@ class AuthServiceProvider extends ServiceProvider
                 return null;
             }
 
-            // Best-effort audit timestamp; not worth a failed request if it races.
+            // Expired tokens are rejected and swept on the way past, so a
+            // stale row cannot be replayed and does not linger in the table.
+            if ($token->isExpired()) {
+                $token->delete();
+
+                return null;
+            }
+
+            // Best-effort audit timestamp; not worth a failed request if it
+            // races. It deliberately does not extend expires_at: the window
+            // is absolute so an active session still has to re-authenticate.
             $token->forceFill(['last_used_at' => Carbon::now()])->saveQuietly();
 
             return $token->user;

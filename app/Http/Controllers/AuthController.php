@@ -26,10 +26,7 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
-        return response()->json([
-            'token' => ApiToken::issue($user),
-            'user' => $user,
-        ], 201);
+        return $this->session($user, 201);
     }
 
     // Verify email + password and issue a new bearer token.
@@ -50,10 +47,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json([
-            'token' => ApiToken::issue($user),
-            'user' => $user,
-        ]);
+        return $this->session($user);
     }
 
     // Revoke only the bearer token used for this request.
@@ -76,5 +70,18 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json($request->user());
+    }
+
+    // Issue a token and return it with its expiry, so the client can drop the
+    // session on time instead of discovering it through a failed request.
+    private function session(User $user, int $status = 200): JsonResponse
+    {
+        $token = ApiToken::issue($user);
+
+        return response()->json([
+            'token' => $token->plainText,
+            'expires_at' => $token->expires_at->toIso8601String(),
+            'user' => $user,
+        ], $status);
     }
 }
