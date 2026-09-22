@@ -31,5 +31,16 @@ $router->group(['prefix' => 'api'], function () use ($router) {
         // Sharing: owner adds/removes members by email / user id.
         $router->post('boards/{boardId}/members', 'BoardMemberController@store');
         $router->delete('boards/{boardId}/members/{userId}', 'BoardMemberController@destroy');
+
+        // Columns and cards: any member may edit. Nested under the parent for
+        // create; flat by id afterwards so the client only needs the id it has.
+        $router->post('boards/{boardId}/columns', 'ColumnController@store');
+        $router->patch('columns/{id}', 'ColumnController@update');
+        $router->delete('columns/{id}', 'ColumnController@destroy');
+
+        $router->post('columns/{columnId}/cards', 'CardController@store');
+        $router->patch('cards/{id}', 'CardController@update');
+        $router->patch('cards/{id}/move', 'CardController@move');
+        $router->delete('cards/{id}', 'CardController@destroy');
     });
 });

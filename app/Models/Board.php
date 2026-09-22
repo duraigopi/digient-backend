@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Board extends Model
 {
@@ -35,6 +36,12 @@ class Board extends Model
             $q->where('owner_id', $user->id)
               ->orWhereHas('members', fn (Builder $m) => $m->where('users.id', $user->id));
         });
+    }
+
+    // Step 4: ordered so the API always returns columns left-to-right.
+    public function columns(): HasMany
+    {
+        return $this->hasMany(Column::class)->orderBy('position');
     }
 
     public function isOwnedBy(User $user): bool

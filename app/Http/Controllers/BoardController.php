@@ -42,11 +42,15 @@ class BoardController extends Controller
         return response()->json($this->present($board, $request), 201);
     }
 
-    // Return one board with its owner and members (columns/cards come in Step 4).
+    // Return the whole board: owner, members, columns and their cards, in order.
     public function show(Request $request, int $id): JsonResponse
     {
         $board = Board::findOrFail($id);
         $this->access->assertCanView($request->user(), $board);
+
+        // Step 4: eager-load columns -> cards. Eloquent issues one query per
+        // relation (2 extra queries total), never one per column.
+        $board->load(['columns', 'columns.cards']);
 
         return response()->json($this->present($board, $request));
     }
